@@ -18,48 +18,48 @@ def extract_frames(video_path, frames_dir, overwrite=False, start=-1, end=-1, ev
     :return: count of images saved
     """
 
-    video_path = os.path.normpath(video_path)  
-    frames_dir = os.path.normpath(frames_dir)  
+    video_path = os.path.normpath(video_path)
+    frames_dir = os.path.normpath(frames_dir)
 
-    video_dir, video_filename = os.path.split(video_path)  
+    video_dir, video_filename = os.path.split(video_path)
 
     assert os.path.exists(video_path)
 
-    capture = cv2.VideoCapture(video_path)  
+    capture = cv2.VideoCapture(video_path)
 
-    if start < 0: 
+    if start < 0:
         start = 0
-    if end < 0: 
+    if end < 0:
         end = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    capture.set(1, start)  
-    frame = start  
+    capture.set(1, start)
+    frame = start
     while_safety = 0
-    saved_count = 0  
+    saved_count = 0
 
-    while frame < end:  
+    while frame < end:
 
-        _, image = capture.read()  
+        _, image = capture.read()
 
-        if while_safety > 500:  
+        if while_safety > 500:
             break
 
-        if image is None:  
+        if image is None:
             while_safety += 1
-            continue  
+            continue
 
-        if frame % every == 0:  
-            while_safety = 0  
+        if frame % every == 0:
+            while_safety = 0
             save_path = os.path.join(frames_dir, video_filename, "{:010d}.jpg".format(frame))
             if not os.path.exists(save_path) or overwrite:
-                cv2.imwrite(save_path, image)  
-                saved_count += 1  
+                cv2.imwrite(save_path, image)
+                saved_count += 1
 
-        frame += 1  
+        frame += 1
 
-    capture.release()  
+    capture.release()
 
-    return saved_count  
+    return saved_count
 
 
 def print_progress(iteration, total, prefix='', suffix='', decimals=3, bar_length=100):
@@ -95,25 +95,25 @@ def video_to_frames(video_path, frames_dir, overwrite=False, every=1, chunk_size
     :return: path to the directory where the frames were saved, or None if fails
     """
 
-    video_path = os.path.normpath(video_path)  
-    frames_dir = os.path.normpath(frames_dir) 
+    video_path = os.path.normpath(video_path)
+    frames_dir = os.path.normpath(frames_dir)
 
-    video_dir, video_filename = os.path.split(video_path)  
+    video_dir, video_filename = os.path.split(video_path)
 
     os.makedirs(os.path.join(frames_dir, video_filename), exist_ok=True)
 
-    capture = cv2.VideoCapture(video_path) 
-    total = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))  
-    capture.release() 
+    capture = cv2.VideoCapture(video_path)
+    total = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    capture.release()
 
     if total < 1:  # if video has no frames, might be and opencv error
         print("Video has no frames. Check your OpenCV + ffmpeg installation")
-        return None 
+        return None
 
-    frame_chunks = [[i, i+chunk_size] for i in range(0, total, chunk_size)]  
-    frame_chunks[-1][-1] = min(frame_chunks[-1][-1], total-1)  
+    frame_chunks = [[i, i+chunk_size] for i in range(0, total, chunk_size)]
+    frame_chunks[-1][-1] = min(frame_chunks[-1][-1], total-1)
 
-    prefix_str = "Extracting frames from {}".format(video_filename)  
+    prefix_str = "Extracting frames from {}".format(video_filename)
 
     # execute across multiple cpu cores to speed up processing, get the count automatically
     with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as executor:
